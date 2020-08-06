@@ -39,4 +39,5 @@ def get_bd(alpha, h, d):
         print max_val-counter, log(single_bd,2), log(single_bd*d, 2)
 
 
-get_bd(alpha, h, d)
+get_bd(alpha, 39, d)
+get_bd(alpha, 60, d)

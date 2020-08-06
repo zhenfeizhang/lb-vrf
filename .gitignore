@@ -1,0 +1,5 @@
+/target
+.project
+Cargo.lock
+a.out
+test
