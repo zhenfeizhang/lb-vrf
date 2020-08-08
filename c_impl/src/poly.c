@@ -103,7 +103,8 @@ static unsigned int rej_uniform(uint32_t *a,
     t  = buf[pos++];
     t |= (uint32_t)buf[pos++] << 8;
     t |= (uint32_t)buf[pos++] << 16;
-    t &= 0x7FFFFF;
+    t |= ((uint32_t)buf[pos++] & 0b111 ) << 24;
+    t &= 0x7FFFFFF;
 
     if(t < Q)
       a[ctr++] = t;

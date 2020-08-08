@@ -5,7 +5,7 @@
 #include "param.h"
 
 typedef struct {
-  uint32_t coeffs[N];
+  uint32_t coeffs[D];
 } poly __attribute__((aligned(32)));
 
 void poly_csubq(poly *a);

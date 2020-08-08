@@ -24,8 +24,8 @@
 /// rank of MLWE
 #define L 4
 
-/// rank of SIS
-#define N 4
+/// degree of the ring
+#define N 256
 
 /// hamming weight of challenge
 #define C 39

@@ -1,6 +1,8 @@
 #include "lbvrf.h"
 #include "param.h"
 #include "imported/rng.h"
+#include "polyvec.h"
+#include "poly.h"
 
 // input a seed of seed_len
 // output a public parameter matrix A
@@ -42,4 +44,23 @@ ring_element** lbvrf_pubparam(const uint8_t* seed, const size_t seed_len){
 
 int get_matrix_A_size(){
 	return sizeof(uint32_t) * RING_SIZE * A_ROW * A_COL;
+}
+
+
+/*************************************************
+* Name:        expand_mat
+*
+* Description: Implementation of ExpandA. Generates matrix A with uniformly
+*              random coefficients a_{i,j} by performing rejection
+*              sampling on the output stream of SHAKE128(rho|i|j).
+*
+* Arguments:   - polyvecl mat[K]: output matrix
+*              - const unsigned char rho[]: byte array containing seed rho
+**************************************************/
+void expand_mat(polyvec9 mat[4], const unsigned char rho[SEEDBYTES]) {
+  unsigned int i, j;
+
+  for(i = 0; i < 4; ++i)
+    for(j = 0; j < 9; ++j)
+      poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
 }

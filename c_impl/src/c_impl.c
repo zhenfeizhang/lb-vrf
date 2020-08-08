@@ -13,7 +13,7 @@
 #include "param.h"
 #include "lbvrf.h"
 #include "imported/misc.h"
-
+#include "polyvec.h"
 //#include "imported/randombytes.h"
 
 int main(void) {
@@ -52,7 +52,15 @@ int main(void) {
 	printf("?\n");
 //	hexDump("prod", t[0], RING_SIZE*sizeof(uint32_t));
 
+	polyvec9 mat_A[4];
+	expand_mat(mat_A, seed);
 
+	for(i=0;i<4;i++){
+		for (j=0;j<9;j++){
+			sprintf(str, "A[%d][%d]", i, j);
+			hexDump(str, mat_A[i].vec[j].coeffs, RING_SIZE*sizeof(uint32_t));
+		}
+	}
 	puts("!!!Hello Algorand!!!"); /* prints !!!Hello Algorand!!! */
 	return EXIT_SUCCESS;
 }
