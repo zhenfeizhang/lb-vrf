@@ -8,7 +8,7 @@ use rand::Rng;
 
 pub trait PolyArith {
     const DEGREE: usize = 0;
-    const MODULUS: u32 = 0;
+    const MODULUS: i64 = 0;
 
     // arith
     fn add(a: &Self, b: &Self) -> Self;
@@ -42,7 +42,7 @@ pub trait PolyArith {
     fn rand_mod_q<R: Rng + ?Sized>(rng: &mut R) -> Self;
 
     // random polynomials modulus beta
-    fn rand_mod_beta<R: Rng + ?Sized>(rng: &mut R, beta: u32) -> Self;
+    fn rand_mod_beta<R: Rng + ?Sized>(rng: &mut R) -> Self;
 
     fn rand_trinary<R: Rng + ?Sized>(rng: &mut R) -> Self;
 }
