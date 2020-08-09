@@ -9,3 +9,4 @@ edition = "2018"
 
 [dependencies]
 libc = "0.2.0"
+rand = "0.4"
