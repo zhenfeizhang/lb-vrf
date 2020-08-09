@@ -30,7 +30,7 @@ pub const BETA_RS_RANGE: u32 = 4_294_901_700;
 /// the param is a 4*9 matrix of polynomials
 #[derive(Clone, Copy, Debug)]
 pub struct Param {
-    matrix: [[Poly256; 9]; 4],
+    pub matrix: [[Poly256; 9]; 4],
 }
 
 impl Param {

@@ -7,7 +7,7 @@ use crate::VRF;
 use rand::CryptoRng;
 use rand_chacha::{rand_core::SeedableRng, ChaCha20Rng};
 pub struct PublicKey {
-    b: [Poly256; 4],
+    t: [Poly256; 4],
 }
 
 pub struct SecretKey {
@@ -47,8 +47,13 @@ impl VRF for LBVRF {
         for e in sk.s.iter_mut() {
             *e = PolyArith::rand_trinary(&mut rng);
         }
-
-        todo!()
+        let mut pk = PublicKey {
+            t: [Poly256::zero(); 4],
+        };
+        for i in 0..4 {
+            pk.t[i] = inner_product(&pp.matrix[i], &sk.s);
+        }
+        Ok((pk, sk))
     }
 
     /// input a message, a public parameter, a pair of keys

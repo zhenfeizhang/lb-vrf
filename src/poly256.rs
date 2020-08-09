@@ -91,6 +91,17 @@ impl PolyArith for Poly256 {
     }
 }
 
+pub(crate) fn inner_product(a: &[Poly256], b: &[Poly256]) -> Poly256 {
+    if a.len() != b.len() {
+        panic!("inner product: length do not match");
+    }
+    let mut res = Poly256::zero();
+    for i in 0..a.len() {
+        res.add_assign(&Poly256::mul(&a[i], &b[i]));
+    }
+    res
+}
+
 fn school_book(a: &Poly256, b: &Poly256) -> Poly256 {
     let mut res = [0i64; Poly256::DEGREE << 1];
     let mut array = [0; Poly256::DEGREE];
@@ -186,4 +197,24 @@ fn test_poly256_mul() {
     for i in 3..Poly256::DEGREE {
         assert!(b.coeff[i] == 0)
     }
+}
+
+#[test]
+fn test_poly256_inner_prod() {
+    let mut a = Poly256::zero();
+    a.coeff[0] = 1;
+    a.coeff[1] = -1;
+    let vec_a = [a; 4];
+    let vec_b = [a; 4];
+    let c = inner_product(vec_a.as_ref(), &vec_b.as_ref());
+    assert!(c.coeff[0] == 4);
+    assert!(c.coeff[1] == Q - 8);
+    assert!(c.coeff[2] == 4);
+    for i in 3..Poly256::DEGREE {
+        assert!(c.coeff[i] == 0)
+    }
+    println!(
+        "{:?}",
+        a.coeff.iter().map(|x| *x as i32).collect::<Vec<i32>>()
+    );
 }
