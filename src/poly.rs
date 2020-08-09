@@ -1,4 +1,5 @@
-use rand::Rng;
+use rand::{CryptoRng, RngCore};
+
 // #[derive(Clone, Debug)]
 // pub struct Poly32 {
 //     coeff: [u32; 32],
@@ -39,10 +40,10 @@ pub trait PolyArith {
     fn zero() -> Self;
 
     // random polynomials modulo Q
-    fn rand_mod_q<R: Rng + ?Sized>(rng: &mut R) -> Self;
+    fn rand_mod_q<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self;
 
     // random polynomials modulus beta
-    fn rand_mod_beta<R: Rng + ?Sized>(rng: &mut R) -> Self;
+    fn rand_mod_beta<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self;
 
-    fn rand_trinary<R: Rng + ?Sized>(rng: &mut R) -> Self;
+    fn rand_trinary<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self;
 }

@@ -9,4 +9,5 @@ edition = "2018"
 
 [dependencies]
 libc = "0.2.0"
-rand = "0.4"
+rand = "0.7.3"
+rand_chacha = ""

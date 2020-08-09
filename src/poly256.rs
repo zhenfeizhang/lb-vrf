@@ -1,9 +1,9 @@
 use crate::param::{BETA, BETA_M2_P1, BETA_RS_RANGE};
 use crate::param::{Q, Q_RS_RANGE};
 use crate::poly::PolyArith;
-use rand::Rng;
+use rand::{CryptoRng, RngCore};
 use std::fmt;
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Poly256 {
     coeff: [i64; 256],
 }
@@ -41,7 +41,7 @@ impl PolyArith for Poly256 {
     }
 
     // random polynomials modulo Q
-    fn rand_mod_q<R: Rng + ?Sized>(rng: &mut R) -> Self {
+    fn rand_mod_q<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut coeff = [0i64; Self::DEGREE];
         for e in &mut coeff.iter_mut() {
             let mut tmp = rng.next_u32();
@@ -54,7 +54,7 @@ impl PolyArith for Poly256 {
     }
 
     // random polynomials modulus beta
-    fn rand_mod_beta<R: Rng + ?Sized>(rng: &mut R) -> Self {
+    fn rand_mod_beta<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut coeff = [0i64; Self::DEGREE];
         for e in &mut coeff.iter_mut() {
             let mut tmp = rng.next_u32();
@@ -67,7 +67,7 @@ impl PolyArith for Poly256 {
         Poly256 { coeff }
     }
 
-    fn rand_trinary<R: Rng + ?Sized>(rng: &mut R) -> Self {
+    fn rand_trinary<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut coeff = [0i64; Self::DEGREE];
         let mut tmp = rng.next_u64();
         let mut ct = 0;

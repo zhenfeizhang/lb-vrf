@@ -1,3 +1,7 @@
+use crate::poly::PolyArith;
+use crate::poly256::Poly256;
+use rand::{CryptoRng, RngCore};
+
 /// P is the modulus for `B part`
 pub const P: i64 = 2_097_169;
 
@@ -22,3 +26,29 @@ pub const BETA_M2_P1: u32 = 179_703;
 /// if a random 32 bits integer is smaller than BETA_RS_RANGE
 /// then it produces a uniform value within [-beta,beta]
 pub const BETA_RS_RANGE: u32 = 4_294_901_700;
+
+/// the param is a 4*9 matrix of polynomials
+#[derive(Clone, Copy, Debug)]
+pub struct Param {
+    matrix: [[Poly256; 9]; 4],
+}
+
+impl Param {
+    pub fn init<R: RngCore + CryptoRng + ?Sized>(mut rng: &mut R) -> Self {
+        let mut res = Self {
+            matrix: [[Poly256::zero(); 9]; 4],
+        };
+        for e in res.matrix.iter_mut() {
+            for f in e.iter_mut() {
+                *f = Poly256::rand_mod_q(&mut rng);
+            }
+        }
+        res
+    }
+}
+
+#[test]
+fn test_param() {
+    let mut rng = rand::thread_rng();
+    let _param = Param::init(&mut rng);
+}
