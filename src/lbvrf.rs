@@ -6,29 +6,24 @@ use crate::poly256::*;
 use crate::VRF;
 use rand::CryptoRng;
 use rand_chacha::{rand_core::SeedableRng, ChaCha20Rng};
-pub struct PublicKey {
-    t: [Poly256; 4],
-}
 
-pub struct SecretKey {
-    s: [Poly256; 9],
-}
-
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Proof {
-    z: [Poly256; 9],
-    c: Poly256,
-    v: Output,
+    pub(crate) z: [Poly256; 9],
+    pub(crate) c: Poly256,
+    pub(crate) v: VRFOutput,
 }
 
-pub type Output = [Poly256; 4];
+pub type VRFOutput = [Poly256; 4];
 
 pub struct LBVRF;
+
 impl VRF for LBVRF {
     type PubParam = Param;
-    type PublicKey = crate::lbvrf::PublicKey;
-    type SecretKey = crate::lbvrf::SecretKey;
+    type PublicKey = crate::keypair::PublicKey;
+    type SecretKey = crate::keypair::SecretKey;
     type Proof = crate::lbvrf::Proof;
-    type VrfOutput = crate::lbvrf::Output;
+    type VrfOutput = crate::lbvrf::VRFOutput;
 
     /// input some seed, generate public parameters
     fn paramgen(seed: [u8; 32]) -> Result<Self::PubParam, String> {
@@ -41,13 +36,13 @@ impl VRF for LBVRF {
         pp: Self::PubParam,
     ) -> Result<(Self::PublicKey, Self::SecretKey), String> {
         let mut rng = ChaCha20Rng::from_seed(seed);
-        let mut sk = SecretKey {
+        let mut sk = Self::SecretKey {
             s: [Poly256::zero(); 9],
         };
         for e in sk.s.iter_mut() {
             *e = PolyArith::rand_trinary(&mut rng);
         }
-        let mut pk = PublicKey {
+        let mut pk = Self::PublicKey {
             t: [Poly256::zero(); 4],
         };
         for i in 0..4 {

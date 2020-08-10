@@ -28,7 +28,7 @@ pub const BETA_M2_P1: u32 = 179_703;
 pub const BETA_RS_RANGE: u32 = 4_294_901_700;
 
 /// the param is a 4*9 matrix of polynomials
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Param {
     pub matrix: [[Poly256; 9]; 4],
 }
@@ -45,10 +45,4 @@ impl Param {
         }
         res
     }
-}
-
-#[test]
-fn test_param() {
-    let mut rng = rand::thread_rng();
-    let _param = Param::init(&mut rng);
 }
