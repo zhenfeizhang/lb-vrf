@@ -14,6 +14,8 @@ pub trait Serdes {
 }
 
 impl Serdes for Poly256 {
+    // todo: use a more efficient way to (de)serialize poly256
+    // todo: use a different endocing scheme for trinary secrets
     fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
         for e in self.coeff.iter() {
             let tmp = *e as u32;
