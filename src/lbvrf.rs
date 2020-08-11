@@ -49,7 +49,7 @@ impl VRF for LBVRF {
             t: [Poly256::zero(); 4],
         };
         for i in 0..4 {
-            pk.t[i] = inner_product(&pp.matrix[i], &sk.s);
+            pk.t[i] = poly256_inner_product(&pp.matrix[i], &sk.s);
         }
         Ok((pk, sk))
     }
@@ -78,7 +78,7 @@ impl VRF for LBVRF {
         let b = hash_to_new_basis(digest.as_ref());
 
         // step 2: v = <b, s>
-        let v = inner_product(&b, &sk.s);
+        let v = poly256_inner_product(&b, &sk.s);
 
         // we start rejection sampling here
         loop {
@@ -91,9 +91,9 @@ impl VRF for LBVRF {
             // step 4: w1 = Ay, w2 = b y
             let mut w1 = [Poly256::zero(); 4];
             for i in 0..4 {
-                w1[i] = inner_product(&pp.matrix[i], &y);
+                w1[i] = poly256_inner_product(&pp.matrix[i], &y);
             }
-            let w2 = inner_product(&b, &y);
+            let w2 = poly256_inner_product(&b, &y);
 
             // step 5: c = hash_to_challenge(pp, pk, message, w1, w2, v)
             let mut hash_input: Vec<u8> = vec![];
@@ -149,12 +149,12 @@ impl VRF for LBVRF {
         // step 1: compute w1_prime = A z - c t
         let mut w1 = [Poly256::zero(); 4];
         for i in 0..4 {
-            w1[i] = inner_product(&pp.matrix[i], &proof.z);
+            w1[i] = poly256_inner_product(&pp.matrix[i], &proof.z);
             w1[i].sub_assign(&Poly256::mul(&proof.c, &pk.t[i]));
         }
 
         // step 2: compute w2_prime = <b, z> - cv
-        let mut w2 = inner_product(&b, &proof.z);
+        let mut w2 = poly256_inner_product(&b, &proof.z);
         w2.sub_assign(&Poly256::mul(&proof.c, &proof.v));
 
         // step 3: check length of z -- done already
@@ -187,7 +187,7 @@ pub(crate) fn hash_to_new_basis(input: &[u8]) -> [Poly256; 9] {
     let mut rng = ChaCha20Rng::from_seed(seed);
     let mut res = [Poly256::zero(); 9];
     for e in res.iter_mut() {
-        *e = Poly256::rand_mod_q(&mut rng);
+        *e = Poly256::uniform_random(&mut rng);
     }
     res
 }

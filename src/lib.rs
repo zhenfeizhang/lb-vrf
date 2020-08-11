@@ -8,6 +8,7 @@ pub mod lbvrf;
 pub mod param;
 pub mod poly;
 pub mod poly256;
+pub mod poly32;
 pub mod serde;
 #[cfg(test)]
 mod test;

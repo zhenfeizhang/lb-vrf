@@ -17,6 +17,12 @@ pub const R: i64 = 852_368;
 /// then it produces a uniform value within [0,Q)
 pub const Q_RS_RANGE: u32 = 4_228_546_602;
 
+/// Q_RS_RANGE: rejection sampling range for P
+/// Q_RS_RANGE = 2^32//P * P
+/// if a random 32 bits integer is smaller than P_RS_RANGE
+/// then it produces a uniform value within [0,P)
+pub const P_RS_RANGE: u32 = 4_292_904_943;
+
 /// range for Y
 pub const BETA: i64 = 89_856;
 pub const BETA_M2_P1: u32 = 179_703;
@@ -44,7 +50,7 @@ impl Param {
         };
         for e in res.matrix.iter_mut() {
             for f in e.iter_mut() {
-                *f = Poly256::rand_mod_q(&mut rng);
+                *f = Poly256::uniform_random(&mut rng);
             }
         }
         res

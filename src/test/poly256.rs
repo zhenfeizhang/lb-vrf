@@ -1,14 +1,14 @@
 use crate::param::BETA;
 use crate::param::Q;
 use crate::poly::PolyArith;
-use crate::poly256::inner_product;
+use crate::poly256::poly256_inner_product;
 use crate::poly256::Poly256;
 use crate::serde::Serdes;
 
 #[test]
 fn test_rand_mod_q() {
     let mut rng = rand::thread_rng();
-    let a: Poly256 = PolyArith::rand_mod_q(&mut rng);
+    let a: Poly256 = PolyArith::uniform_random(&mut rng);
     for e in a.coeff.iter() {
         assert!(*e < Poly256::MODULUS, "coefficient greater than Q")
     }
@@ -42,7 +42,7 @@ fn test_poly256_mul() {
 
     // zero
     let a = Poly256::zero();
-    let b = Poly256::rand_mod_q(&mut rng);
+    let b = Poly256::uniform_random(&mut rng);
     let c = Poly256::mul(&a, &b);
     for e in c.coeff.iter() {
         assert!(*e == 0, "coefficient not zero")
@@ -50,8 +50,8 @@ fn test_poly256_mul() {
 
     // associative
 
-    let a = Poly256::rand_mod_q(&mut rng);
-    let b = Poly256::rand_mod_q(&mut rng);
+    let a = Poly256::uniform_random(&mut rng);
+    let b = Poly256::uniform_random(&mut rng);
     let c = Poly256::mul(&a, &b);
     let d = Poly256::mul(&b, &a);
     assert!(c == d, "coefficient not zero");
@@ -76,7 +76,7 @@ fn test_poly256_inner_prod() {
     a.coeff[1] = -1;
     let vec_a = [a; 4];
     let vec_b = [a; 4];
-    let c = inner_product(vec_a.as_ref(), &vec_b.as_ref());
+    let c = poly256_inner_product(vec_a.as_ref(), &vec_b.as_ref());
     assert!(c.coeff[0] == 4);
     assert!(c.coeff[1] == Q - 8);
     assert!(c.coeff[2] == 4);
@@ -100,7 +100,7 @@ fn test_poly256_serdes() {
 
     // random poly
     let mut rng = rand::thread_rng();
-    let a: Poly256 = PolyArith::rand_mod_q(&mut rng);
+    let a: Poly256 = PolyArith::uniform_random(&mut rng);
     let mut buf: Vec<u8> = vec![];
     assert!(a.serialize(&mut buf).is_ok());
     let b = Poly256::deserialize(&mut buf[..].as_ref()).unwrap();

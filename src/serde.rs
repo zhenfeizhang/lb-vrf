@@ -3,6 +3,7 @@ use crate::lbvrf::{Proof, VRFOutput};
 use crate::param::Param;
 use crate::poly::PolyArith;
 use crate::poly256::Poly256;
+use crate::poly32::Poly32;
 use std::io::{Error, ErrorKind, Read, Result, Write};
 
 pub trait Serdes {
@@ -11,6 +12,32 @@ pub trait Serdes {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self>
     where
         Self: std::marker::Sized;
+}
+
+impl Serdes for Poly32 {
+    // todo: use a more efficient way to (de)serialize poly256
+    // todo: use a different endocing scheme for trinary secrets
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+        for e in self.coeff.iter() {
+            let tmp = *e as u32;
+            let buf = tmp.to_be_bytes();
+            writer.write_all(&buf)?;
+        }
+        Ok(())
+    }
+
+    fn deserialize<R: Read>(reader: &mut R) -> Result<Self>
+    where
+        Self: std::marker::Sized,
+    {
+        let mut coeff = [0i64; 32];
+        let mut buf = [0u8; 4];
+        for i in 0..32 {
+            reader.read_exact(&mut buf)?;
+            coeff[i] = i32::from_be_bytes(buf) as i64;
+        }
+        Ok(Self { coeff })
+    }
 }
 
 impl Serdes for Poly256 {

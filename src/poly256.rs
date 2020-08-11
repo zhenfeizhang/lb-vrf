@@ -1,3 +1,5 @@
+// this file implements neccessary arithmetics over Z_q[x]/(x^256 + 1)
+
 use crate::param::{BETA, BETA_M2_P1, BETA_RS_RANGE};
 use crate::param::{Q, Q_RS_RANGE};
 use crate::poly::PolyArith;
@@ -55,7 +57,7 @@ impl PolyArith for Poly256 {
         }
     }
     // random polynomials modulo Q
-    fn rand_mod_q<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
+    fn uniform_random<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut coeff = [0i64; Self::DEGREE];
         for e in &mut coeff.iter_mut() {
             let mut tmp = rng.next_u32();
@@ -105,7 +107,7 @@ impl PolyArith for Poly256 {
     }
 }
 
-pub(crate) fn inner_product(a: &[Poly256], b: &[Poly256]) -> Poly256 {
+pub(crate) fn poly256_inner_product(a: &[Poly256], b: &[Poly256]) -> Poly256 {
     if a.len() != b.len() {
         panic!("inner product: length do not match");
     }

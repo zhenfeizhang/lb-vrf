@@ -46,7 +46,7 @@ pub trait PolyArith {
     fn zero() -> Self;
 
     // random polynomials modulo Q
-    fn rand_mod_q<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self;
+    fn uniform_random<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self;
 
     // random polynomials modulus beta
     fn rand_mod_beta<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self;
