@@ -2,7 +2,7 @@
 
 extern crate rand;
 extern crate rand_chacha;
-
+extern crate sha2;
 pub mod keypair;
 pub mod lbvrf;
 pub mod param;
@@ -29,11 +29,12 @@ pub trait VRF {
 
     /// input a message, a public parameter, a pair of keys
     /// generate a vrf proof
-    fn proof<Blob: AsRef<[u8]>>(
+    fn prove<Blob: AsRef<[u8]>>(
         message: Blob,
         pp: Self::PubParam,
         pk: Self::PublicKey,
         sk: Self::SecretKey,
+        seed: [u8; 32],
     ) -> Result<Self::Proof, String>;
 
     /// input a message, a public parameter, the public key, and a proof

@@ -36,6 +36,12 @@ pub trait PolyArith {
         *self = Self::mul(self, b);
     }
 
+    // lift the coefficients to [0, q-1)
+    fn normalized(&mut self);
+
+    // lift the coefficients to [-q/2, q/2)
+    fn centered(&mut self);
+
     // assign
     fn zero() -> Self;
 

@@ -40,6 +40,20 @@ impl PolyArith for Poly256 {
         }
     }
 
+    fn normalized(&mut self) {
+        for e in self.coeff.iter_mut() {
+            (*e) = (*e + (Self::MODULUS << 1)) % Self::MODULUS;
+        }
+    }
+
+    fn centered(&mut self) {
+        self.normalized();
+        for e in self.coeff.iter_mut() {
+            if *e << 1 > Self::MODULUS {
+                *e -= Self::MODULUS;
+            }
+        }
+    }
     // random polynomials modulo Q
     fn rand_mod_q<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut coeff = [0i64; Self::DEGREE];
@@ -99,6 +113,7 @@ pub(crate) fn inner_product(a: &[Poly256], b: &[Poly256]) -> Poly256 {
     for i in 0..a.len() {
         res.add_assign(&Poly256::mul(&a[i], &b[i]));
     }
+    res.normalized();
     res
 }
 

@@ -56,7 +56,7 @@ impl Serdes for Param {
         let mut res = [[Poly256::zero(); 9]; 4];
         for e in res.iter_mut() {
             for f in e.iter_mut() {
-                *f = Poly256::deserialize(reader)?;
+                *f = Poly256::deserialize::<R>(reader)?;
             }
         }
         Ok(Param { matrix: res })
@@ -103,25 +103,25 @@ impl Serdes for SecretKey {
     }
 }
 
-impl Serdes for VRFOutput {
-    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
-        for e in self.iter() {
-            e.serialize(writer)?;
-        }
-        Ok(())
-    }
-
-    fn deserialize<R: Read>(reader: &mut R) -> Result<Self>
-    where
-        Self: std::marker::Sized,
-    {
-        let mut res = [Poly256::zero(); 4];
-        for e in res.iter_mut() {
-            *e = Poly256::deserialize(reader)?;
-        }
-        Ok(res)
-    }
-}
+// impl Serdes for VRFOutput {
+//     fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+//         for e in self.iter() {
+//             e.serialize(writer)?;
+//         }
+//         Ok(())
+//     }
+//
+//     fn deserialize<R: Read>(reader: &mut R) -> Result<Self>
+//     where
+//         Self: std::marker::Sized,
+//     {
+//         let mut res = [Poly256::zero(); 4];
+//         for e in res.iter_mut() {
+//             *e = Poly256::deserialize(reader)?;
+//         }
+//         Ok(res)
+//     }
+// }
 
 impl Serdes for Proof {
     fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
