@@ -66,69 +66,8 @@ impl VRF for LBVRF {
         sk: Self::SecretKey,
         seed: [u8; 32],
     ) -> Result<Self::Proof, String> {
-        let mut rng = ChaCha20Rng::from_seed(seed);
-        let mut y = [Poly256::zero(); 9];
-        let mut rs = 0;
-        // step 0: s_p = s mod (p, x^32+R)
-        let s_p: Vec<Poly32> = sk.s.iter().map(|x| (*x).into()).collect();
-
-        // step 1: b = hash_to_new_basis (pp, pk, message)
-        let mut hash_input: Vec<u8> = vec![];
-        assert!(pp.serialize(&mut hash_input).is_ok());
-        assert!(pk.serialize(&mut hash_input).is_ok());
-        hash_input = [hash_input.as_ref(), message.as_ref()].concat();
-        let mut hasher = Sha512::new();
-        hasher.update(hash_input);
-        let digest = hasher.finalize();
-        let b = hash_to_new_basis(digest.as_ref());
-
-        // step 2: v = <b, s>
-        let v = poly32_inner_product(&b, &s_p);
-
-        // we start rejection sampling here
-        loop {
-            rs += 1;
-            // step 3: sample y
-            for e in y.iter_mut() {
-                *e = Poly256::rand_mod_beta(&mut rng);
-            }
-            let y_p: Vec<Poly32> = y.iter().map(|x| (*x).into()).collect();
-
-            // step 4: w1 = Ay, w2 = by
-            let mut w1 = [Poly256::zero(); 4];
-            for (i, e) in w1.iter_mut().enumerate() {
-                *e = poly256_inner_product(&pp.matrix[i], &y);
-            }
-            let w2 = poly32_inner_product(&b, &y_p);
-
-            // step 5: c = hash_to_challenge(pp, pk, message, w1, w2, v)
-            let mut hash_input: Vec<u8> = vec![];
-
-            // todo: properly handle the errors
-            for e in w1.iter() {
-                assert!((*e).serialize(&mut hash_input).is_ok());
-            }
-            assert!(w2.serialize(&mut hash_input).is_ok());
-            assert!(v.serialize(&mut hash_input).is_ok());
-            let mut hasher = Sha512::new();
-            hasher.update([digest.as_ref(), hash_input.as_ref()].concat());
-            let digest = hasher.finalize();
-            let c = hash_to_challenge(digest.as_ref());
-
-            let mut z = y;
-            for (i, e) in z.iter_mut().enumerate() {
-                (*e).add_assign(&PolyArith::mul(&c, &sk.s[i]));
-            }
-            for e in z.iter_mut() {
-                (*e).centered();
-            }
-
-            println!("rejection sampling {} times", rs);
-            println!("z:\n{:?}", z);
-            if check_norm(&z) {
-                return Ok(Proof { z, c, v });
-            }
-        }
+        let (proof, _rs) = prove_with_rs(message, pp, pk, sk, seed)?;
+        Ok(proof)
     }
 
     /// input a message, a public parameter, the public key, and a proof
@@ -185,6 +124,7 @@ impl VRF for LBVRF {
         if c == proof.c {
             Ok(Some(proof.v))
         } else {
+            #[cfg(debug_assertions)]
             println!("verification failed");
             Ok(None)
         }
@@ -256,4 +196,79 @@ fn check_norm(z: &[Poly256; 9]) -> bool {
     }
 
     true
+}
+
+/// input a message, a public parameter, a pair of keys
+/// generate a vrf proof
+pub(crate) fn prove_with_rs<Blob: AsRef<[u8]>>(
+    message: Blob,
+    pp: Param,
+    pk: crate::keypair::PublicKey,
+    sk: crate::keypair::SecretKey,
+    seed: [u8; 32],
+) -> Result<(Proof, usize), String> {
+    let mut rng = ChaCha20Rng::from_seed(seed);
+    let mut y = [Poly256::zero(); 9];
+    let mut rs = 0;
+    // step 0: s_p = s mod (p, x^32+R)
+    let s_p: Vec<Poly32> = sk.s.iter().map(|x| (*x).into()).collect();
+
+    // step 1: b = hash_to_new_basis (pp, pk, message)
+    let mut hash_input: Vec<u8> = vec![];
+    assert!(pp.serialize(&mut hash_input).is_ok());
+    assert!(pk.serialize(&mut hash_input).is_ok());
+    hash_input = [hash_input.as_ref(), message.as_ref()].concat();
+    let mut hasher = Sha512::new();
+    hasher.update(hash_input);
+    let digest = hasher.finalize();
+    let b = hash_to_new_basis(digest.as_ref());
+
+    // step 2: v = <b, s>
+    let v = poly32_inner_product(&b, &s_p);
+
+    // we start rejection sampling here
+    loop {
+        rs += 1;
+        // step 3: sample y
+        for e in y.iter_mut() {
+            *e = Poly256::rand_mod_beta(&mut rng);
+        }
+        let y_p: Vec<Poly32> = y.iter().map(|x| (*x).into()).collect();
+
+        // step 4: w1 = Ay, w2 = by
+        let mut w1 = [Poly256::zero(); 4];
+        for (i, e) in w1.iter_mut().enumerate() {
+            *e = poly256_inner_product(&pp.matrix[i], &y);
+        }
+        let w2 = poly32_inner_product(&b, &y_p);
+
+        // step 5: c = hash_to_challenge(pp, pk, message, w1, w2, v)
+        let mut hash_input: Vec<u8> = vec![];
+
+        // todo: properly handle the errors
+        for e in w1.iter() {
+            assert!((*e).serialize(&mut hash_input).is_ok());
+        }
+        assert!(w2.serialize(&mut hash_input).is_ok());
+        assert!(v.serialize(&mut hash_input).is_ok());
+        let mut hasher = Sha512::new();
+        hasher.update([digest.as_ref(), hash_input.as_ref()].concat());
+        let digest = hasher.finalize();
+        let c = hash_to_challenge(digest.as_ref());
+
+        let mut z = y;
+        for (i, e) in z.iter_mut().enumerate() {
+            (*e).add_assign(&PolyArith::mul(&c, &sk.s[i]));
+        }
+        for e in z.iter_mut() {
+            (*e).centered();
+        }
+        // #[cfg(debug_assertions)]
+        // println!("rejection sampling {} times", rs);
+        // #[cfg(debug_assertions)]
+        // println!("z:\n{:?}", z);
+        if check_norm(&z) {
+            return Ok((Proof { z, c, v }, rs));
+        }
+    }
 }

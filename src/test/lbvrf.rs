@@ -1,5 +1,6 @@
 use crate::lbvrf::*;
 use crate::param::*;
+use crate::rand::RngCore;
 use crate::serde::Serdes;
 use crate::VRF;
 #[test]
@@ -43,4 +44,32 @@ fn test_lbvrf() {
     let res = <LBVRF as VRF>::verify(message, param, pk, proof).unwrap();
     assert!(res.is_some());
     assert_eq!(res.unwrap(), proof.v);
+}
+
+#[test]
+fn test_rs() {
+    let mut rng = rand::thread_rng();
+    let mut pp_seed = [0u8; 32];
+
+    let mut key_seed = [0u8; 32];
+
+    let mut vrf_seed = [0u8; 32];
+
+    let mut t = 0;
+    let total = 10000;
+    for _i in 0..total {
+        rng.fill_bytes(&mut pp_seed);
+        rng.fill_bytes(&mut key_seed);
+        rng.fill_bytes(&mut vrf_seed);
+        let param: Param = <LBVRF as VRF>::paramgen(pp_seed).unwrap();
+        let (pk, sk) = <LBVRF as VRF>::keygen(key_seed, param).unwrap();
+        let message = "this is a message that vrf signs";
+        let (proof, rs) = prove_with_rs(message, param, pk, sk, vrf_seed).unwrap();
+        t += rs;
+        let res = <LBVRF as VRF>::verify(message, param, pk, proof).unwrap();
+        assert!(res.is_some());
+        assert_eq!(res.unwrap(), proof.v);
+    }
+    println!("rs times {} for {} vrfs", t, total);
+    assert!(false)
 }

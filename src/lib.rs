@@ -5,6 +5,7 @@ extern crate rand_chacha;
 extern crate sha2;
 pub mod keypair;
 pub mod lbvrf;
+pub mod ntt;
 pub mod param;
 pub mod poly;
 pub mod poly256;
