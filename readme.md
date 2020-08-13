@@ -7,6 +7,7 @@ lattice based verifiable random function
   - [ ] implement NTT to accelerate polynomial multiplications
   - [ ] better serialization to reduce sizes
   - [ ] use Montgomery representations to further improve performance
+  - [ ] use HNF secrets
 - [ ] many time VRF scheme
   - [ ] decide which long term signature scheme we want to use
   - [ ] implement scheme
