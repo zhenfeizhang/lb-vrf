@@ -50,9 +50,7 @@ fn test_lbvrf() {
 fn test_rs() {
     let mut rng = rand::thread_rng();
     let mut pp_seed = [0u8; 32];
-
     let mut key_seed = [0u8; 32];
-
     let mut vrf_seed = [0u8; 32];
 
     let mut t = 0;
