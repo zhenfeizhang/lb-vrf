@@ -54,7 +54,7 @@ fn test_rs() {
     let mut vrf_seed = [0u8; 32];
 
     let mut t = 0;
-    let total = 10000;
+    let total = 100;
     for _i in 0..total {
         rng.fill_bytes(&mut pp_seed);
         rng.fill_bytes(&mut key_seed);
@@ -69,5 +69,5 @@ fn test_rs() {
         assert_eq!(res.unwrap(), proof.v);
     }
     println!("rs times {} for {} vrfs", t, total);
-    assert!(false)
+    // assert!(false)
 }

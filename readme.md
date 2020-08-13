@@ -5,7 +5,7 @@ lattice based verifiable random function
   - [x] implement a basic scheme
   - [x] use crt to compress vrf outputs
   - [ ] implement NTT to accelerate polynomial multiplications
-  - [ ] better serialization to reduce sizes
+  - [x] better serialization to reduce sizes
   - [ ] use Montgomery representations to further improve performance
   - [ ] use HNF secrets
 - [ ] many time VRF scheme
@@ -14,3 +14,4 @@ lattice based verifiable random function
 - [ ] (a lot) more tests
 - [ ] zeroize memory
 - [ ] constant time implementation (seems not required)
+- [ ] documentation
