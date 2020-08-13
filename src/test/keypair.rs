@@ -31,7 +31,7 @@ fn test_serdes_keygen() {
 
     let mut buf: Vec<u8> = vec![];
     assert!(sk.serialize(&mut buf).is_ok());
-    println!("{:?}", buf);
+    println!("{:02x?}", buf);
     let sk2 = <LBVRF as VRF>::SecretKey::deserialize(&mut buf[..].as_ref()).unwrap();
     assert_eq!(sk, sk2);
 }
