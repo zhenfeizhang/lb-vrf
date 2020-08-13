@@ -1,8 +1,11 @@
+#![allow(clippy::many_single_char_names)]
 // use crate::keypair::PublicKey;
 use crate::param::*;
 use crate::poly::PolyArith;
 use crate::poly256::*;
-use rand::{CryptoRng, RngCore};
+use crate::poly32::poly32_inner_product;
+use crate::poly32::Poly32;
+// use rand::{CryptoRng, RngCore};
 // use crate::Poly32::*;
 use crate::serde::Serdes;
 use crate::VRF;
@@ -17,7 +20,7 @@ pub struct Proof {
     pub(crate) v: VRFOutput,
 }
 
-pub type VRFOutput = Poly256;
+pub type VRFOutput = Poly32;
 
 pub struct LBVRF;
 
@@ -66,6 +69,8 @@ impl VRF for LBVRF {
         let mut rng = ChaCha20Rng::from_seed(seed);
         let mut y = [Poly256::zero(); 9];
         let mut rs = 0;
+        // step 0: s_p = s mod (p, x^32+R)
+        let s_p: Vec<Poly32> = sk.s.iter().map(|x| (*x).into()).collect();
 
         // step 1: b = hash_to_new_basis (pp, pk, message)
         let mut hash_input: Vec<u8> = vec![];
@@ -78,7 +83,7 @@ impl VRF for LBVRF {
         let b = hash_to_new_basis(digest.as_ref());
 
         // step 2: v = <b, s>
-        let v = poly256_inner_product(&b, &sk.s);
+        let v = poly32_inner_product(&b, &s_p);
 
         // we start rejection sampling here
         loop {
@@ -87,16 +92,19 @@ impl VRF for LBVRF {
             for e in y.iter_mut() {
                 *e = Poly256::rand_mod_beta(&mut rng);
             }
+            let y_p: Vec<Poly32> = y.iter().map(|x| (*x).into()).collect();
 
-            // step 4: w1 = Ay, w2 = b y
+            // step 4: w1 = Ay, w2 = by
             let mut w1 = [Poly256::zero(); 4];
-            for i in 0..4 {
-                w1[i] = poly256_inner_product(&pp.matrix[i], &y);
+            for (i, e) in w1.iter_mut().enumerate() {
+                *e = poly256_inner_product(&pp.matrix[i], &y);
             }
-            let w2 = poly256_inner_product(&b, &y);
+            let w2 = poly32_inner_product(&b, &y_p);
 
             // step 5: c = hash_to_challenge(pp, pk, message, w1, w2, v)
             let mut hash_input: Vec<u8> = vec![];
+
+            // todo: properly handle the errors
             for e in w1.iter() {
                 assert!((*e).serialize(&mut hash_input).is_ok());
             }
@@ -107,9 +115,9 @@ impl VRF for LBVRF {
             let digest = hasher.finalize();
             let c = hash_to_challenge(digest.as_ref());
 
-            let mut z = y.clone();
-            for i in 0..9 {
-                z[i].add_assign(&PolyArith::mul(&c, &sk.s[i]));
+            let mut z = y;
+            for (i, e) in z.iter_mut().enumerate() {
+                (*e).add_assign(&PolyArith::mul(&c, &sk.s[i]));
             }
             for e in z.iter_mut() {
                 (*e).centered();
@@ -136,7 +144,7 @@ impl VRF for LBVRF {
             return Ok(None);
         }
 
-        // step 0: rebuild b
+        // step 0: rebuild b and z_p, c_p, v_p
         let mut hash_input: Vec<u8> = vec![];
         assert!(pp.serialize(&mut hash_input).is_ok());
         assert!(pk.serialize(&mut hash_input).is_ok());
@@ -146,21 +154,25 @@ impl VRF for LBVRF {
         let digest = hasher.finalize();
         let b = hash_to_new_basis(digest.as_ref());
 
+        let z_p: Vec<Poly32> = proof.z.iter().map(|x| (*x).into()).collect();
+        let c_p: Poly32 = proof.c.into();
+
         // step 1: compute w1_prime = A z - c t
         let mut w1 = [Poly256::zero(); 4];
-        for i in 0..4 {
-            w1[i] = poly256_inner_product(&pp.matrix[i], &proof.z);
-            w1[i].sub_assign(&Poly256::mul(&proof.c, &pk.t[i]));
+        for (i, e) in w1.iter_mut().enumerate() {
+            *e = poly256_inner_product(&pp.matrix[i], &proof.z);
+            (*e).sub_assign(&Poly256::mul(&proof.c, &pk.t[i]));
         }
 
         // step 2: compute w2_prime = <b, z> - cv
-        let mut w2 = poly256_inner_product(&b, &proof.z);
-        w2.sub_assign(&Poly256::mul(&proof.c, &proof.v));
+        let mut w2 = poly32_inner_product(&b, &z_p);
+        w2.sub_assign(&Poly32::mul(&c_p, &proof.v));
 
         // step 3: check length of z -- done already
 
         // step 4: check c = hash(A, t, u, w1_prime, w2_prime, v)
         let mut hash_input: Vec<u8> = vec![];
+        // todo: properly handle the errors
         for e in w1.iter() {
             assert!((*e).serialize(&mut hash_input).is_ok());
         }
@@ -179,15 +191,15 @@ impl VRF for LBVRF {
     }
 }
 
-pub(crate) fn hash_to_new_basis(input: &[u8]) -> [Poly256; 9] {
+pub(crate) fn hash_to_new_basis(input: &[u8]) -> [Poly32; 9] {
     let mut hasher = Sha512::new();
     hasher.update([input, "domain seperator: hash to basis".as_ref()].concat());
     let digest = hasher.finalize();
     let seed: [u8; 32] = digest.as_slice()[0..32].try_into().expect("Wrong length");
     let mut rng = ChaCha20Rng::from_seed(seed);
-    let mut res = [Poly256::zero(); 9];
+    let mut res = [Poly32::zero(); 9];
     for e in res.iter_mut() {
-        *e = Poly256::uniform_random(&mut rng);
+        *e = Poly32::uniform_random(&mut rng);
     }
     res
 }

@@ -42,4 +42,5 @@ fn test_lbvrf() {
 
     let res = <LBVRF as VRF>::verify(message, param, pk, proof).unwrap();
     assert!(res.is_some());
+    assert_eq!(res.unwrap(), proof.v);
 }

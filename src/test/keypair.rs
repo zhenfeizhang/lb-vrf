@@ -1,4 +1,4 @@
-use crate::keypair::{PublicKey, SecretKey};
+// use crate::keypair::{PublicKey, SecretKey};
 use crate::lbvrf::LBVRF;
 use crate::param::Param;
 use crate::serde::Serdes;

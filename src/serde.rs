@@ -4,7 +4,7 @@ use crate::param::Param;
 use crate::poly::PolyArith;
 use crate::poly256::Poly256;
 use crate::poly32::Poly32;
-use std::io::{Error, ErrorKind, Read, Result, Write};
+use std::io::{Read, Result, Write};
 
 pub trait Serdes {
     fn serialize<W: Write>(&self, writer: &mut W) -> Result<()>;
@@ -32,9 +32,9 @@ impl Serdes for Poly32 {
     {
         let mut coeff = [0i64; 32];
         let mut buf = [0u8; 4];
-        for i in 0..32 {
+        for e in coeff.iter_mut() {
             reader.read_exact(&mut buf)?;
-            coeff[i] = i32::from_be_bytes(buf) as i64;
+            *e = i32::from_be_bytes(buf) as i64;
         }
         Ok(Self { coeff })
     }
@@ -58,9 +58,9 @@ impl Serdes for Poly256 {
     {
         let mut coeff = [0i64; 256];
         let mut buf = [0u8; 4];
-        for i in 0..256 {
+        for e in coeff.iter_mut() {
             reader.read_exact(&mut buf)?;
-            coeff[i] = i32::from_be_bytes(buf) as i64;
+            *e = i32::from_be_bytes(buf) as i64;
         }
         Ok(Self { coeff })
     }

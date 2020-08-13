@@ -11,6 +11,19 @@ pub const Q: i64 = 100_679_681;
 /// R is a root s.t. (x^32+R) divides (x^256+1) mod P
 pub const R: i64 = 852_368;
 
+/// R_BASE is [(-R)^0, (-R)^1, (-R)^2, (-R)^3, (-R)^4, (-R)^5, (-R)^6, (-R)^7] mod p
+/// 0 1
+/// 1 1244801
+/// 2 562078
+/// 3 957346
+/// 4 1556910
+/// 5 1017123
+/// 6 275829
+/// 7 1609180
+pub const R_BASE: [i64; 8] = [
+    1, 1_244_801, 562_078, 957_346, 1_556_910, 1_017_123, 275_829, 1_609_180,
+];
+
 /// Q_RS_RANGE: rejection sampling range for Q
 /// Q_RS_RANGE = 2^32//Q * Q
 /// if a random 32 bits integer is smaller than Q_RS_RANGE

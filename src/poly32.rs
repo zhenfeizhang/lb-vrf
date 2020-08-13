@@ -1,13 +1,32 @@
 // this file implements neccessary arithmetics over Z_p[x]/(x^32 + R)
 
-use crate::param::{BETA, BETA_M2_P1, BETA_RS_RANGE, R};
-use crate::param::{P, P_RS_RANGE};
+use crate::param::{P, P_RS_RANGE, R, R_BASE};
 use crate::poly::PolyArith;
+use crate::poly256::Poly256;
 use rand::{CryptoRng, RngCore};
-use std::fmt;
+use std::convert::From;
+// use std::fmt;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Poly32 {
     pub coeff: [i64; 32],
+}
+
+impl From<Poly256> for Poly32 {
+    // converting a ring element over Z_q[x]/(x^256+1)
+    // into a ring elemetn over Z_p[x]/(x^32+R)
+    fn from(a: Poly256) -> Self {
+        let mut res = [0i64; 32];
+        res.copy_from_slice(&a.coeff[0..32]);
+
+        for (i, e) in res.iter_mut().enumerate() {
+            for (j, r) in R_BASE.iter().enumerate().skip(1) {
+                *e += a.coeff[i + (j << 5)] * (*r);
+            }
+            *e %= P;
+        }
+
+        Self { coeff: res }
+    }
 }
 
 impl PolyArith for Poly32 {
@@ -70,13 +89,13 @@ impl PolyArith for Poly32 {
     }
 
     // random polynomials modulus beta
-    fn rand_mod_beta<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
+    fn rand_mod_beta<R: RngCore + CryptoRng + ?Sized>(_rng: &mut R) -> Self {
         // we will never need to sample a uniform mod beta element
         // over this ring
         unimplemented!();
     }
 
-    fn rand_trinary<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
+    fn rand_trinary<R: RngCore + CryptoRng + ?Sized>(_rng: &mut R) -> Self {
         // we will never need to sample a trinary element
         // over this ring
         unimplemented!();
