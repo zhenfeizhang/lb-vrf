@@ -130,32 +130,12 @@ impl Serdes for SecretKey {
     }
 }
 
-// impl Serdes for VRFOutput {
-//     fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
-//         for e in self.iter() {
-//             e.serialize(writer)?;
-//         }
-//         Ok(())
-//     }
-//
-//     fn deserialize<R: Read>(reader: &mut R) -> Result<Self>
-//     where
-//         Self: std::marker::Sized,
-//     {
-//         let mut res = [Poly256::zero(); 4];
-//         for e in res.iter_mut() {
-//             *e = Poly256::deserialize(reader)?;
-//         }
-//         Ok(res)
-//     }
-// }
-
 impl Serdes for Proof {
     fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
         for e in self.z.iter() {
             e.serialize(writer)?;
         }
-        self.c.serialize(writer)?;
+        pack_trinary(&self.c, writer)?;
         self.v.serialize(writer)?;
         Ok(())
     }
@@ -168,7 +148,8 @@ impl Serdes for Proof {
         for e in z.iter_mut() {
             *e = Poly256::deserialize(reader)?;
         }
-        let c = Poly256::deserialize(reader)?;
+        let mut c = Poly256::zero();
+        unpack_trinary(&mut c, reader)?;
         let v = VRFOutput::deserialize(reader)?;
         Ok(Proof { z, c, v })
     }
