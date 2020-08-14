@@ -54,6 +54,13 @@ impl PolyArith for Poly32 {
         school_book(a, b)
     }
 
+    fn mul_trinary(_a: &Self, _trinary: &Self) -> Self {
+        unimplemented!()
+    }
+    fn mul_karatsuba(_a: &Self, _b: &Self) -> Self {
+        unimplemented!()
+    }
+
     // assign
     fn zero() -> Self {
         Poly32 {

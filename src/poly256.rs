@@ -33,19 +33,42 @@ impl PolyArith for Poly256 {
     fn mul(a: &Self, b: &Self) -> Self {
         // todo: implement NTT
         school_book(a, b)
+    }
+    fn mul_trinary(a: &Self, trinary: &Self) -> Self {
+        let mut buf = [0i64; 512];
+        for (i, e) in trinary.coeff.iter().enumerate() {
+            if *e == 1 {
+                for (j, f) in a.coeff.iter().enumerate() {
+                    buf[i + j] += *f;
+                }
+            }
+            if *e == -1 {
+                for (j, f) in a.coeff.iter().enumerate() {
+                    buf[i + j] -= *f;
+                }
+            }
+        }
+        for i in 0..256 {
+            buf[i] = (buf[i] + (Q << 1) - buf[i + 256]) % Q
+        }
+        let mut res = [0i64; 256];
+        res.copy_from_slice(&buf[0..256]);
+        Poly256 { coeff: res }
+    }
 
+    fn mul_karatsuba(a: &Self, b: &Self) -> Self {
         // the following code uses karatsuba -- it is somehow slower than school_book
-        // let mut c = [0i64; Self::DEGREE << 1];
-        // karatsuba(&a.coeff, &b.coeff, &mut c, Self::DEGREE);
-        // let mut res = [0i64; Self::DEGREE];
-        // res.copy_from_slice(
-        //     &(0..Self::DEGREE)
-        //         .map(|i| c[i] - c[Self::DEGREE + i])
-        //         .collect::<Vec<i64>>(),
-        // );
-        // let mut rt = Self { coeff: res };
-        // rt.normalized();
-        // rt
+        let mut c = [0i64; Self::DEGREE << 1];
+        karatsuba(&a.coeff, &b.coeff, &mut c, Self::DEGREE);
+        let mut res = [0i64; Self::DEGREE];
+        res.copy_from_slice(
+            &(0..Self::DEGREE)
+                .map(|i| c[i] - c[Self::DEGREE + i])
+                .collect::<Vec<i64>>(),
+        );
+        let mut rt = Self { coeff: res };
+        rt.normalized();
+        rt
     }
 
     // assign
@@ -131,6 +154,19 @@ pub(crate) fn poly256_inner_product(a: &[Poly256], b: &[Poly256]) -> Poly256 {
     res.normalized();
     res
 }
+
+pub(crate) fn poly256_inner_product_trinary(a: &[Poly256], b: &[Poly256]) -> Poly256 {
+    if a.len() != b.len() {
+        panic!("inner product: length do not match");
+    }
+    let mut res = Poly256::zero();
+    for i in 0..a.len() {
+        res.add_assign(&Poly256::mul_trinary(&a[i], &b[i]));
+    }
+    res.normalized();
+    res
+}
+
 #[allow(dead_code)]
 pub(crate) fn school_book(a: &Poly256, b: &Poly256) -> Poly256 {
     let mut res = [0i64; Poly256::DEGREE << 1];
@@ -224,4 +260,16 @@ fn test_karatsuba() {
         assert_eq!(*e % Q, c2[i] % Q)
     }
     // assert!(false);
+}
+
+#[test]
+fn test_mul_trinary() {
+    let mut rng = rand::thread_rng();
+    let a = Poly256::uniform_random(&mut rng);
+    let b = Poly256::rand_trinary(&mut rng);
+    let mut c1 = Poly256::mul_trinary(&a, &b);
+    let mut c2 = Poly256::mul(&a, &b);
+    c1.normalized();
+    c2.normalized();
+    assert_eq!(c1, c2)
 }

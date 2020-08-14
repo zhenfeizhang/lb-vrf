@@ -65,6 +65,7 @@ impl Serdes for Param {
                 pack_mod_q_poly(f, writer)?;
             }
         }
+        writer.write_all(&self.digest)?;
         Ok(())
     }
 
@@ -78,7 +79,12 @@ impl Serdes for Param {
                 unpack_mod_q_poly(f, reader)?;
             }
         }
-        Ok(Param { matrix: res })
+        let mut digest = [0u8; 32];
+        reader.read_exact(&mut digest)?;
+        Ok(Param {
+            matrix: res,
+            digest,
+        })
     }
 }
 

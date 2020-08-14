@@ -52,7 +52,7 @@ impl VRF for LBVRF {
             t: [Poly256::zero(); 4],
         };
         for i in 0..4 {
-            pk.t[i] = poly256_inner_product(&pp.matrix[i], &sk.s);
+            pk.t[i] = poly256_inner_product_trinary(&pp.matrix[i], &sk.s);
         }
         Ok((pk, sk))
     }
@@ -85,9 +85,8 @@ impl VRF for LBVRF {
 
         // step 0: rebuild b and z_p, c_p, v_p
         let mut hash_input: Vec<u8> = vec![];
-        assert!(pp.serialize(&mut hash_input).is_ok());
         assert!(pk.serialize(&mut hash_input).is_ok());
-        hash_input = [hash_input.as_ref(), message.as_ref()].concat();
+        hash_input = [pp.digest.as_ref(), hash_input.as_ref(), message.as_ref()].concat();
         let mut hasher = Sha512::new();
         hasher.update(hash_input);
         let digest = hasher.finalize();
@@ -100,7 +99,7 @@ impl VRF for LBVRF {
         let mut w1 = [Poly256::zero(); 4];
         for (i, e) in w1.iter_mut().enumerate() {
             *e = poly256_inner_product(&pp.matrix[i], &proof.z);
-            (*e).sub_assign(&Poly256::mul(&proof.c, &pk.t[i]));
+            (*e).sub_assign(&Poly256::mul_trinary(&pk.t[i], &proof.c));
         }
 
         // step 2: compute w2_prime = <b, z> - cv
@@ -215,9 +214,8 @@ pub(crate) fn prove_with_rs<Blob: AsRef<[u8]>>(
 
     // step 1: b = hash_to_new_basis (pp, pk, message)
     let mut hash_input: Vec<u8> = vec![];
-    assert!(pp.serialize(&mut hash_input).is_ok());
     assert!(pk.serialize(&mut hash_input).is_ok());
-    hash_input = [hash_input.as_ref(), message.as_ref()].concat();
+    hash_input = [pp.digest.as_ref(), hash_input.as_ref(), message.as_ref()].concat();
     let mut hasher = Sha512::new();
     hasher.update(hash_input);
     let digest = hasher.finalize();
@@ -258,7 +256,7 @@ pub(crate) fn prove_with_rs<Blob: AsRef<[u8]>>(
 
         let mut z = y;
         for (i, e) in z.iter_mut().enumerate() {
-            (*e).add_assign(&PolyArith::mul(&c, &sk.s[i]));
+            (*e).add_assign(&PolyArith::mul_trinary(&sk.s[i], &c));
         }
         for e in z.iter_mut() {
             (*e).centered();

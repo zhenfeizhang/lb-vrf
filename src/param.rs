@@ -1,7 +1,8 @@
 use crate::poly::PolyArith;
 use crate::poly256::Poly256;
+use crate::serde::Serdes;
 use rand::{CryptoRng, RngCore};
-
+use sha2::{Digest, Sha512};
 /// P is the modulus for `B part`
 pub const P: i64 = 2_097_169;
 
@@ -50,22 +51,36 @@ pub const BETA_RS_RANGE: u32 = 4_294_901_700;
 /// number of non-zero coefficients in challenge
 pub const KAPPA: usize = 39;
 
+// we should actually reduce this to 864 with a better encoder
+pub const Q_POLY_LEN: usize = 896;
+// we should actually reduce this to 672 with a better encoder
+pub const P_POLY_LEN: usize = 704;
+
 /// the param is a 4*9 matrix of polynomials
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Param {
     pub matrix: [[Poly256; 9]; 4],
+    pub digest: [u8; 32],
 }
 
 impl Param {
     pub fn init<R: RngCore + CryptoRng + ?Sized>(mut rng: &mut R) -> Self {
         let mut res = Self {
             matrix: [[Poly256::zero(); 9]; 4],
+            digest: [0; 32],
         };
+        let mut buf: Vec<u8> = vec![];
         for e in res.matrix.iter_mut() {
             for f in e.iter_mut() {
                 *f = Poly256::uniform_random(&mut rng);
+                // todo: handle error
+                (*f).serialize(&mut buf).unwrap();
             }
         }
+        let mut hasher = Sha512::new();
+        hasher.update(buf);
+        let digest = hasher.finalize();
+        res.digest.copy_from_slice(&digest[0..32]);
         res
     }
 }

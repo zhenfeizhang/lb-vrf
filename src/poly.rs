@@ -36,6 +36,9 @@ pub trait PolyArith {
         *self = Self::mul(self, b);
     }
 
+    fn mul_trinary(a: &Self, trinary: &Self) -> Self;
+    fn mul_karatsuba(a: &Self, b: &Self) -> Self;
+
     // lift the coefficients to [0, q-1)
     fn normalized(&mut self);
 
